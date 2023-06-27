@@ -1,24 +1,78 @@
-// let currentAudio = null;
-// let recordKeys = [];
-// function playSound (keycode){
-//     document.querySelector('audio[data-key="' + keycode + '"]').play();
-//     document.querySelector('div[data-key="' + keycode + '"]').classList.toggle('playing');
-//     let audio = document.querySelector('audio[data-key="' + keycode + '"]');
-//     currentAudio = audio;
-// } ;
+let currentAudio = null;
+let recordedKeys = [];
+let recording = false;
 
-// window.addEventListener('keydown', (event) =>{
-//     if (currentAudio) {
-//         currentAudio.pause();
-//         currentAudio.currentTime = 0;
-//       };
-//     playSound(event.keyCode);
-    
-// });
-// window.addEventListener('keyup', (event) =>{
-//     playSound(event.keyCode);
-// });
+function playSound(keycode) {
+        document.querySelector('audio[data-key="' + keycode + '"]').play();
+    document.querySelector('div[data-key="' + keycode + '"]').classList.toggle('playing');
+    let audio = document.querySelector('audio[data-key="' + keycode + '"]');
+    currentAudio = audio;
+    if (audio) {
+        audio.currentTime = 0;
+        audio.play();
+    }
+};
+window.addEventListener('keydown', (event) => {
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+    }
+    playSound(event.keyCode);
+  });
 
+function recordKey(event) {
+    if (recording) {
+        recordedKeys.push(event.keyCode);
+    }
+}
+
+function beatBox() {
+    let index = 0;
+    const duration = 180; // Durée entre chaque touche enregistrée
+
+    function simulateKey(keycode) {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                playSound(keycode);
+                resolve();
+            }, duration);
+        });
+    }
+
+    function playBeat() {
+        if (index < recordedKeys.length) {
+            const keycode = recordedKeys[index];
+            simulateKey(keycode).then(() => {
+                index++;
+                if (index === recordedKeys.length) {
+                    index = 0;
+                    playBeat();
+                } else {
+                    playBeat();
+                }
+            });
+        } else {
+            index = 0;
+            playBeat();
+        }
+    }
+
+    document.addEventListener('keydown', (event) => {
+        if (event.keyCode === 32) {
+            if (!recording) {
+                recording = true;
+                recordedKeys = [];
+                document.addEventListener('keydown', recordKey);
+            } else {
+                recording = false;
+                document.removeEventListener('keydown', recordKey);
+                playBeat();
+            }
+        }
+    });
+}
+
+beatBox();
 // async function beatBox() {  //await au moment de l'appeler
 //     const keys = recordedKeys;
     
